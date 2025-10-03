@@ -68,7 +68,7 @@ Atenção: respeite a política de uso do Nominatim (limites e identificação v
 ▶️ Como Executar Localmente
 Clone ou baixe o projeto:
 
-git clone https://github.com/SEU_USUARIO/SEU_REPO.git
+git clone https://github.com/AgnesRibeiro/pwa-atividade.git
 cd SEU_REPO
 Inicie um servidor local (ex.: serve ou Python):
 
@@ -120,4 +120,5 @@ Exportação: recursos para exportar todos os registros em JSON.
 📐 Compressão/resize de imagens antes de salvar para reduzir espaço.
 
 Licença & Observações
+
 Projeto para fins educacionais/práticos.

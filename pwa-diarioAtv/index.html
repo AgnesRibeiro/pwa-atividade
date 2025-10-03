@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diário de Momentos — Fotos + Local</title>
+  <meta name="description" content="Diário digital: foto + geolocalização + memórias">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #fefaf3;
+      --soft-blue: #b8d4e3;
+      --soft-green: #d4e8d4;
+      --soft-lavender: #e3d4e3;
+      --soft-peach: #f8d7c4;
+      --dark-blue: #2c3e50;
+      --text-soft: #5a5a5a;
+      --text-dark: #333;
+      --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      color: var(--text-dark);
+      background-color: var(--cream);
+      background-image: 
+        linear-gradient(90deg, transparent 79px, rgba(171, 206, 212, 0.2) 79px, rgba(171, 206, 212, 0.2) 81px, transparent 81px),
+        linear-gradient(#eee .1em, transparent .1em);
+      background-size: 100% 1.2em;
+      line-height: 1.6;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      border-left: 6px solid var(--soft-blue);
+    }
+
+    .logo {
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--soft-blue);
+      border-radius: 50%;
+      font-size: 24px;
+      color: white;
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      margin: 0;
+      color: var(--dark-blue);
+      font-weight: 600;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      color: var(--text-soft);
+      margin-top: 4px;
+    }
+
+    .card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-top: 24px;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 12px 20px;
+      border-radius: 8px;
+      border: none;
+      background: var(--soft-blue);
+      color: var(--dark-blue);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      flex: 1;
+      min-width: 160px;
+      justify-content: center;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    button.secondary {
+      background: var(--soft-green);
+    }
+
+    button.tertiary {
+      background: var(--soft-peach);
+    }
+
+    button.outline {
+      background: transparent;
+      border: 1px solid var(--soft-blue);
+      color: var(--dark-blue);
+    }
+
+    .button-icon {
+      font-size: 18px;
+    }
+
+    .preview-container {
+      margin-top: 20px;
+    }
+
+    img.preview {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      margin-top: 12px;
+      border: 1px solid #eee;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: none;
+    }
+
+    #map {
+      height: 300px;
+      border-radius: 8px;
+      margin-top: 12px;
+      border: 1px solid #eee;
+      display: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .location-info {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--soft-lavender);
+      border-radius: 8px;
+      display: none;
+    }
+
+    textarea {
+      width: 100%;
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      background: var(--cream);
+      font-family: inherit;
+      resize: vertical;
+      transition: border-color 0.3s ease;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--soft-blue);
+      box-shadow: 0 0 0 2px rgba(184, 212, 227, 0.3);
+    }
+
+    .status {
+      padding: 12px 16px;
+      background-color: var(--soft-lavender);
+      border-radius: 8px;
+      margin-top: 16px;
+      font-size: 0.9rem;
+    }
+
+    h3 {
+      margin-top: 24px;
+      border-top: 2px dashed var(--soft-peach);
+      padding-top: 24px;
+      color: var(--dark-blue);
+      font-family: 'Playfair Display', serif;
+    }
+
+    .records-list {
+      list-style: none;
+      padding: 0;
+      margin-top: 16px;
+    }
+
+    .record-item {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      padding: 20px;
+      border-radius: 8px;
+      background: var(--cream);
+      margin-bottom: 16px;
+      border-left: 4px solid var(--soft-green);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .record-item:hover {
+      transform: translateX(4px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .record-item img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .record-meta {
+      flex: 1;
+    }
+
+    .record-date {
+      font-weight: 600;
+      color: var(--dark-blue);
+      margin-bottom: 4px;
+    }
+
+    .record-note {
+      font-style: italic;
+      color: var(--text-soft);
+      margin: 8px 0;
+    }
+
+    .record-address {
+      font-size: 0.85rem;
+      color: var(--text-soft);
+      margin-bottom: 4px;
+    }
+
+    .record-coords {
+      font-size: 0.8rem;
+      color: var(--text-soft);
+    }
+
+    footer {
+      margin-top: 40px;
+      font-size: 0.8rem;
+      color: var(--text-soft);
+      text-align: center;
+      padding: 20px;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: var(--radius);
+      padding: 30px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      position: relative;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--dark-blue);
+    }
+
+    .close-modal {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--text-soft);
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    .close-modal:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .modal-body {
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .modal-button {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-width: 100px;
+    }
+
+    .modal-button.primary {
+      background: var(--soft-blue);
+      color: var(--dark-blue);
+    }
+
+    .modal-button.secondary {
+      background: var(--soft-green);
+      color: var(--dark-blue);
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+      
+      header {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+      }
+      
+      .actions {
+        flex-direction: column;
+      }
+      
+      button {
+        min-width: 100%;
+      }
+      
+      .record-item {
+        flex-direction: column;
+      }
+      
+      .record-item img {
+        width: 100%;
+        height: auto;
+        max-height: 200px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">📔</div>
+    <div>
+      <h1>Diário de Momentos</h1>
+      <div class="subtitle">Capture fotos, localizações e guarde suas memórias</div>
+    </div>
+  </header>
+
+  <main class="card">
+    <div class="actions">
+      <button id="btnTakePhoto" class="primary">
+        <span class="button-icon">📷</span> Tirar/Selecionar Foto
+      </button>
+      <button id="btnGetLoc" class="secondary">
+        <span class="button-icon">📍</span> Obter Localização
+      </button>
+      <button id="btnSave" class="tertiary">
+        <span class="button-icon">💾</span> Salvar Registro
+      </button>
+      <button id="btnExport" class="outline">
+        <span class="button-icon">⬇️</span> Exportar JSON
+      </button>
+    </div>
+
+    <input id="fileInput" type="file" accept="image/*" capture="environment" style="display:none">
+
+    <div class="preview-container">
+      <img id="preview" class="preview" alt="Pré-visualização" src="">
+      <div id="map"></div>
+    </div>
+
+    <div id="locationInfo" class="location-info">
+      <div class="small">Latitude: <span id="lat"></span></div>
+      <div class="small">Longitude: <span id="lon"></span></div>
+      <div class="small">Endereço: <span id="address"></span></div>
+    </div>
+
+    <textarea id="noteInput" placeholder="Escreva algo sobre este momento..." rows="3"></textarea>
+
+    <div id="status" class="status">Status: Pronto para capturar momentos</div>
+
+    <h3>Registros Salvos</h3>
+    <ul id="records" class="records-list"></ul>
+  </main>
+
+  <!-- Modal para mensagens -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Atenção</h2>
+        <button class="close-modal">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        Mensagem de exemplo
+      </div>
+      <div class="modal-footer">
+        <button id="modalConfirm" class="modal-button primary">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Diário de Momentos &copy; 2023 - Um lugar para guardar suas memórias
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
